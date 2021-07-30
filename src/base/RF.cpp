@@ -59,22 +59,18 @@ void RandomForestClassifier::fit(const Matrix &train, int categories) {
 }
 
 void RandomForestClassifier::predict(const Matrix &test, Vector &preds) {
-    int i;
-    const int H = test.n;
+    const int N = test.n;
     // Collect all predictions.
-    Matrix labels(this->nEstimators, H, 0.0);
-    i = 0;
-    while (i < this->nEstimators) {
+    Matrix labels(this->nEstimators, N, 0.0);
+    for (int i = 0; i < this->nEstimators; ++i) {
         this->estimators[i]->predict(test, labels[i]);
-        ++i;
     }
-    // Aggregate predictions with weights.
-    i = 0;
-    while (i < H) {
+    // Aggregate predictions with majority votes.
+    for (int i = 0; i < N; ++i) {
         Vector votes(this->nEstimators), dist(0.0, this->nCategories);
         labels.col(i, votes);
         distribution(votes, dist);
-        preds[i++] = argmax(dist);
+        preds[i] = argmax(dist);
     }
 }
 

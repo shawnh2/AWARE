@@ -3,7 +3,6 @@
 
 #include "CART.h"
 
-#include <string>
 #include <random>
 
 namespace wrf {
