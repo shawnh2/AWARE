@@ -16,6 +16,7 @@ namespace wrf {
     } DatasetInfo;
 
     // + Add more dataset here.
+    static DatasetInfo ds_Abalone     = { 9,  4177, 28, "abalone"};
     static DatasetInfo ds_Breast      = {31,   569,  2, "breast"};
     static DatasetInfo ds_Credit      = {25,  1000,  2, "credit"};
     static DatasetInfo ds_Ecoli       = { 8,   336,  8, "ecoli"};
@@ -31,6 +32,7 @@ namespace wrf {
     static DatasetInfo ds_Sonar       = {61,   208,  2, "sonar"};
     static DatasetInfo ds_Transfusion = { 5,   748,  2, "transfusion"};
     static DatasetInfo ds_Waveform    = {22,  5000,  3, "waveform"};
+    static DatasetInfo ds_Wilt        = { 6,  4839,  2, "wilt"};
     static DatasetInfo ds_Yeast       = { 9,  1484, 10, "yeast"};
     // +
 
