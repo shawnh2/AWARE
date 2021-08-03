@@ -16,7 +16,7 @@ TWRF::TWRF(
     nEstimators, maxDepth, randomState, maxSamplesRatio,
     maxFeatures, minSamplesSplit, minSamplesLeaf, minSplitGain
 ) {
-    this->learnerWeights = Vector(0.0, this->nEstimators);
+    this->estimatorsW = Vector(0.0, this->nEstimators);
 }
 
 void TWRF::predict(const Matrix &test, const Matrix &train, Vector &preds) {
@@ -32,7 +32,7 @@ void TWRF::predict(const Matrix &test, const Matrix &train, Vector &preds) {
         Vector votes(this->nEstimators), dist(0.0, this->nCategories);
         labels.col(i, votes);
         for (int j = 0; j < this->nEstimators; ++j) {
-            dist[votes[j]] += this->learnerWeights[j];
+            dist[votes[j]] += this->estimatorsW[j];
         }
         preds[i] = argmax(dist);
     }
@@ -52,6 +52,6 @@ void TWRF::getWeights(const Matrix &train) {
         this->estimators[i]->predict(oob, preds);
         right[preds == labels] = 1.0;
 
-        this->learnerWeights[i] = right.sum() / N;
+        this->estimatorsW[i] = right.sum() / N;
     }
 }

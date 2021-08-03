@@ -21,15 +21,17 @@ namespace wrf {
         void predict(const Matrix &test, const Matrix &train, Vector &preds);
 
     private:
-        Vector learnerWeights;
+        Vector estimatorsW;
 
         /* Accuracy weights based on OOB predictions.
-        Reference:
-        [1] Li, Wang, Ding, Dong. Trees Weighting Random Forest Method for Classifying High-Dimensional Noisy Data.
-            IEEE International Conference on E-Business Engineering, 2010.
-        [2] Shahhosseini, Hu. Improved Weighted Random Forest for Classification Problems.
-            Progress in Intelligent Decision Science, 2020.
-        */
+
+         Reference:
+         [1] Li, Wang, Ding, Dong. Trees Weighting Random Forest Method for Classifying High-Dimensional Noisy Data.
+             IEEE International Conference on E-Business Engineering, 2010.
+
+         [2] Shahhosseini, Hu. Improved Weighted Random Forest for Classification Problems.
+             Progress in Intelligent Decision Science, 2020.
+         */
         void getWeights(const Matrix &train);
     };
 
