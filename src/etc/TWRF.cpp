@@ -47,7 +47,7 @@ void TWRF::getWeights(const Matrix &train) {
         for (int j = 1; j < N + 1; ++j) oob[j - 1] = train[oobIdx[j]];
 
         // Compute accuracy.
-        Vector right(0.0, N), labels(0.0, N), preds(0.0, N);
+        Vector right(0.0, N), labels(N), preds(N);
         oob.col(-1, labels);
         this->estimators[i]->predict(oob, preds);
         right[preds == labels] = 1.0;

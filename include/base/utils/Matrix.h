@@ -16,6 +16,7 @@ namespace wrf {
 
         // Constructor
         Matrix(int n, int m, double a);
+        Matrix(int n, double eye);
 
         // Get one column of data in matrix.
         void col(int i, Vector &out) const;

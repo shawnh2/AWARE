@@ -5,9 +5,18 @@ using namespace wrf;
 Matrix::Matrix(int n, int m, double a) {
     this->n = n;
     this->m = m;
-    // Init data.
     this->rows = new Vector[n];
     for (int i = 0; i < n; ++i) this->rows[i] = Vector(a, m);
+}
+
+Matrix::Matrix(int n, double eye) {
+    this->n = n;
+    this->m = n;
+    this->rows = new Vector[n];
+    for (int i = 0; i < n; ++i) {
+        this->rows[i] = Vector(0.0, n);
+        this->rows[i][i] = eye;
+    }
 }
 
 void Matrix::col(int i, Vector &out) const {
@@ -58,7 +67,7 @@ Matrix Matrix::operator*(const Matrix &mat) const {
     Matrix res(this->n, mat.m, 0.0);
     for (int i = 0; i < this->n; ++i) {
         for (int j = 0; j < mat.m; ++j) {
-            for (int k = 0; k < this->n; ++k) {
+            for (int k = 0; k < mat.m; ++k) {
                 res.rows[i][j] += this->rows[i][k] * mat.rows[k][j];
             }
         }
