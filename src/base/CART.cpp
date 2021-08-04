@@ -1,7 +1,7 @@
 #include "CART.h"
 #include "Metric.h"
 
-#include <algorithm>
+#include <numeric>
 
 using namespace wrf;
 
@@ -18,7 +18,7 @@ void CART::fit(const Matrix &train, const Indexes &featuresIdx, int categories) 
     // Select the training samples.
     const int N = train.n;
     Indexes trainIdx(N);
-    for (int i = 0; i < N; ++i) trainIdx[i] = i;
+    std::iota(trainIdx.begin(), trainIdx.end(), 0);
 
     this->nCategories = categories;
     this->buildTree(train, trainIdx, featuresIdx, 1, 1);
@@ -72,9 +72,9 @@ void CART::buildTree(
         // Split train set into left and right set.
         Indexes lti(H), rti(H);
         int l = 0, r = 0;
-        for (int i = 0; i < H; ++i) {
-            if (train[trainIdx[i]][best.curFeature] <= best.splitValue) lti[l++] = trainIdx[i];
-            else rti[r++] = trainIdx[i];
+        for (int ti : trainIdx) {
+            if (train[ti][best.curFeature] <= best.splitValue) lti[l++] = ti;
+            else rti[r++] = ti;
         }
         lti.resize(l);
         rti.resize(r);

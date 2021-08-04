@@ -1,6 +1,8 @@
 #include "RF.h"
 #include "Metric.h"
 
+#include <numeric>
+
 using namespace wrf;
 
 RandomForestClassifier::RandomForestClassifier(
@@ -84,7 +86,7 @@ void RandomForestClassifier::bootstrap(
     int epoch
 ) {
     int i;
-    const int N = featuresIdx.size(), H = train.n;
+    const int H = train.n;
 
     // Draw samples from train set with replacement.
     int samplesIdx[this->nSamples];
@@ -104,7 +106,7 @@ void RandomForestClassifier::bootstrap(
     this->oobIndexes[epoch] = oob;
 
     // Draw features from train set without replacement.
-    for (i = 0; i < N; ++i) featuresIdx[i] = i;
+    std::iota(featuresIdx.begin(), featuresIdx.end(), 0);
     std::shuffle(featuresIdx.begin(), featuresIdx.end(), this->randomEngine);
     featuresIdx.resize(this->nFeatures);
 

@@ -51,26 +51,23 @@ void WAVE::getWeights(const Matrix &train) {
     }
 
     // X is Performance Matrix: indicating whether the classification is right (1) or wrong (0).
-    Matrix X = X_t.T();
-    Matrix J_nk(N, K, 1.0), J_kk(K, K, 1.0), I_k(K, 1.0);
+    Matrix X = X_t.T(), J_nk(N, K, 1.0), J_kk(K, K, 1.0), I_k(K, 1.0);
     Vector i_k(1.0, K);
 
-    // Set an initial instance weight vector.
-    Matrix cmn = (J_nk - X) * (J_kk - I_k);  // n*k
-    Vector num1 = cmn * i_k;  // n*1;
-    Vector Q = num1 / num1.sum();
-    // Set an initial classifiers weight vector.
-    Vector P(0.0, K);
+    // Set an initial instance weight vector and a classifiers weight vector.
+    Matrix cmn = (J_nk - X) * (J_kk - I_k);
+    Vector Q = cmn * i_k, P;
+    Q /= Q.sum();
 
     // Stop the iteration when the weight vectors become stable.
     int epoch = std::max(this->nFeatures, 3);
     for (int m = 0; m < epoch; ++m) {
         // Calculate a classifier weight vector.
-        Vector num2 = X_t * Q;  // k*1
-        P = num2 / num2.sum();
+        P = X_t * Q;
+        P /= P.sum();
         // Update the instance weight vector.
-        Vector num3 = cmn * P;  // n*1
-        Q = num3 / num3.sum();
+        Q = cmn * P;
+        Q /= Q.sum();
     }
     this->estimatorsW = P;
 }
