@@ -19,7 +19,8 @@ namespace wrf {
         Matrix(int n, double eye);
 
         // Get one column of data in matrix.
-        void col(int i, Vector &out) const;
+        Vector col(int i) const;
+        // Get one column of data with selected rows in matrix.
         void col(int i, const Indexes &idx, Vector &out) const;
 
         // Transpose

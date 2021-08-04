@@ -24,15 +24,17 @@ void CART::fit(const Matrix &train, const Indexes &featuresIdx, int categories) 
     this->buildTree(train, trainIdx, featuresIdx, 1, 1);
 }
 
-void CART::predict(const Vector &vec, double &pred) {
-    pred = this->predict(vec, this->nodes[1]);
+double CART::predict(const Vector &vec) {
+    return this->predict(vec, this->nodes[1]);
 }
 
-void CART::predict(const Matrix &test, Vector &preds) {
+Vector CART::predict(const Matrix &test) {
+    Vector preds(0.0, test.n);
     for (int i = 0; i < test.n; ++i) {
-        const Vector &row = test[i];
+        Vector &row = test[i];
         preds[i] = this->predict(row, this->nodes[1]);
     }
+    return preds;
 }
 
 void CART::buildTree(
@@ -51,9 +53,9 @@ void CART::buildTree(
     node->leftChild = 0;
     node->rightChild = 0;
 
-    Vector labels(H), distLabels(0.0, this->nCategories);
+    Vector labels(H);
     train.col(-1, trainIdx, labels);
-    distribution(labels, distLabels);
+    Vector distLabels = distribution(labels, this->nCategories);
 
     // If labels are all the same or samples are less than minimum samples number.
     if (H <= this->minSamplesSplit || H == distLabels.max()) {
@@ -127,12 +129,12 @@ void CART::getBestSplit(
             // Get the distribution of left and right labels.
             int k = 0;
             while (k < H) {
-                if (*j >= features[k]) ldist[labels[k]] += 1.0;
-                else rdist[labels[k]] += 1.0;
+                int at = labels[k];
+                if (*j >= features[k]) ++ldist[at];
+                else ++rdist[at];
                 ++k;
             }
-            int l = ldist.sum();
-            int r = rdist.sum();
+            int l = ldist.sum(), r = rdist.sum();
 
             // Calculate split gain.
             // splitGain += (double)l / H * (1.0 - pow(ldist / l, 2).sum());

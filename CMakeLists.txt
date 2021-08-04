@@ -10,13 +10,14 @@ set(SOURCES
         src/base/RF.cpp
         src/etc/TWRF.cpp src/etc/TWRF.h
         src/etc/WAVE.cpp src/etc/WAVE.h
-        src/AWARE.cpp src/AWARE.h)
+        src/AWARE.cpp)
 set(HEADERS
         include/utils/Matrix.h
         include/utils/Dataset.h
         include/utils/Metric.h
         include/CART.h
-        include/RF.h)
+        include/RF.h
+        include/AWARE.h)
 
 add_executable(WRF main.cpp ${SOURCES} ${HEADERS})
 

@@ -45,7 +45,7 @@ namespace wrf {
 
         void fit(const Matrix &train, int categories);
 
-        void predict(const Matrix &test, Vector &preds);
+        Vector predict(const Matrix &test);
 
     protected:
         // The number of features and samples while Bagging.

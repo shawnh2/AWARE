@@ -19,12 +19,14 @@ Matrix::Matrix(int n, double eye) {
     }
 }
 
-void Matrix::col(int i, Vector &out) const {
+Vector Matrix::col(int i) const {
+    Vector out(this->n);
     int k = 0, at = i < 0 ? i + this->m : i;
     while (k < this->n) {
         out[k] = this->rows[k][at];
         ++k;
     }
+    return out;
 }
 
 void Matrix::col(int i, const Indexes &idx, Vector &out) const {

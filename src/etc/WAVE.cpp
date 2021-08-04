@@ -19,33 +19,34 @@ WAVE::WAVE(
     this->estimatorsW = Vector(0.0, this->nEstimators);
 }
 
-void WAVE::predict(const Matrix &test, const Matrix &train, Vector &preds) {
+Vector WAVE::predict(const Matrix &test, const Matrix &train) {
     const int N = test.n;
+
     // Collect all predictions.
     Matrix labels(this->nEstimators, N, 0.0);
     for (int i = 0; i < this->nEstimators; ++i) {
-        this->estimators[i]->predict(test, labels[i]);
+        labels[i] = this->estimators[i]->predict(test);
     }
+
     // Aggregate predictions with weights.
+    Vector preds(0.0, N);
     this->getWeights(train);
     for (int i = 0; i < N; ++i) {
-        Vector votes(this->nEstimators), dist(0.0, this->nCategories);
-        labels.col(i, votes);
+        Vector votes = labels.col(i), dist(0.0, this->nCategories);
         for (int j = 0; j < this->nEstimators; ++j) {
             dist[votes[j]] += this->estimatorsW[j];
         }
         preds[i] = argmax(dist);
     }
+    return preds;
 }
 
 void WAVE::getWeights(const Matrix &train) {
     const int N = train.n, K = this->nEstimators;
     Matrix X_t(K, N, 0.0);
-    Vector y(N);
-    train.col(-1, y);
+    Vector y = train.col(-1);
     for (int i = 0; i < K; ++i) {
-        Vector pred(N);
-        this->estimators[i]->predict(train, pred);
+        Vector pred = this->estimators[i]->predict(train);
         X_t[i][pred == y] = 1.0;
     }
 
@@ -62,7 +63,8 @@ void WAVE::getWeights(const Matrix &train) {
     Vector P(0.0, K);
 
     // Stop the iteration when the weight vectors become stable.
-    for (int m = 0; m < this->nFeatures; ++m) {
+    int epoch = std::max(this->nFeatures, 3);
+    for (int m = 0; m < epoch; ++m) {
         // Calculate a classifier weight vector.
         Vector num2 = X_t * Q;  // k*1
         P = num2 / num2.sum();

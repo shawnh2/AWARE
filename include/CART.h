@@ -42,9 +42,9 @@ namespace wrf {
         void fit(const Matrix &train, const Indexes &featuresIdx, int categories);
 
         // Predict label form a single vector.
-        void predict(const Vector &vec, double &pred);
+        double predict(const Vector &vec);
         // Predict labels from a test set.
-        void predict(const Matrix &test, Vector &preds);
+        Vector predict(const Matrix &test);
 
     private:
         // Store the node in a sequence.

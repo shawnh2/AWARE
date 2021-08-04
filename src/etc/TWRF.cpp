@@ -19,23 +19,26 @@ TWRF::TWRF(
     this->estimatorsW = Vector(0.0, this->nEstimators);
 }
 
-void TWRF::predict(const Matrix &test, const Matrix &train, Vector &preds) {
+Vector TWRF::predict(const Matrix &test, const Matrix &train) {
     const int N = test.n;
+
     // Collect all predictions.
     Matrix labels(this->nEstimators, N, 0.0);
     for (int i = 0; i < this->nEstimators; ++i) {
-        this->estimators[i]->predict(test, labels[i]);
+        labels[i] = this->estimators[i]->predict(test);
     }
+
     // Aggregate predictions with weights.
+    Vector preds(0.0, N);
     this->getWeights(train);
     for (int i = 0; i < N; ++i) {
-        Vector votes(this->nEstimators), dist(0.0, this->nCategories);
-        labels.col(i, votes);
+        Vector votes = labels.col(i), dist(0.0, this->nCategories);
         for (int j = 0; j < this->nEstimators; ++j) {
             dist[votes[j]] += this->estimatorsW[j];
         }
         preds[i] = argmax(dist);
     }
+    return preds;
 }
 
 void TWRF::getWeights(const Matrix &train) {
@@ -47,9 +50,8 @@ void TWRF::getWeights(const Matrix &train) {
         for (int j = 1; j < N + 1; ++j) oob[j - 1] = train[oobIdx[j]];
 
         // Compute accuracy.
-        Vector right(0.0, N), labels(N), preds(N);
-        oob.col(-1, labels);
-        this->estimators[i]->predict(oob, preds);
+        Vector right(0.0, N), labels = oob.col(-1);
+        Vector preds = this->estimators[i]->predict(oob);
         right[preds == labels] = 1.0;
 
         this->estimatorsW[i] = right.sum() / N;

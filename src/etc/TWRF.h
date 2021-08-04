@@ -28,7 +28,7 @@ namespace wrf {
             double minSplitGain = 0.0
         );
 
-        void predict(const Matrix &test, const Matrix &train, Vector &preds);
+        Vector predict(const Matrix &test, const Matrix &train);
 
     private:
         Vector estimatorsW;
