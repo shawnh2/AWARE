@@ -12,6 +12,11 @@ namespace wrf {
         double leaf;
         // The index of left and right child. 0 means none.
         int leftChild, rightChild;
+
+        // Constructor
+        Node(int f, double v, double leaf, int li, int ri)
+        : splitFeature(f), splitValue(v), leaf(leaf), leftChild(li), rightChild(ri)
+        {}
     } Node;
 
     // Store the information about one best split feature.
@@ -37,7 +42,12 @@ namespace wrf {
         // The minimum information gain of one split.
         double minSplitGain;
 
-        CART(int maxDepth, int minSamplesSplit, int minSamplesLeaf, double minSplitGain);
+        CART(
+            int maxDepth,
+            int minSamplesSplit,
+            int minSamplesLeaf,
+            double minSplitGain
+        );
 
         void fit(const Matrix &train, const Indexes &featuresIdx, int categories);
 
@@ -48,20 +58,20 @@ namespace wrf {
 
     private:
         // Store the node in a sequence.
-        std::vector<Node*> nodes;
+        std::vector<Node> nodes;
 
         // The categories number of current training dataset.
-        int nCategories = 0;
+        int nCategories{0};
 
         void buildTree(
             const Matrix &train,
             const Indexes &trainIdx,
             const Indexes &featuresIdx,
             int depth,
-            int nodeIdx
+            int iNode
         );
 
-        // Get one best split, criterion: Gini Index.
+        // Get one best split by criterion: Gini Index.
         void getBestSplit(
             const Matrix &train,
             const Indexes &trainIdx,
@@ -70,7 +80,8 @@ namespace wrf {
             bestSplit &best
         ) const;
 
-        double predict(const Vector &vec, Node *node);
+        // Predict label form a single vector recursively.
+        double predict(const Vector &vec, const Node &node);
     };
 
 }

@@ -10,7 +10,7 @@ RandomForestClassifier::RandomForestClassifier(
     int maxDepth,
     int randomState,
     float maxSamplesRatio,
-    const std::string &maxFeatures,
+    MaxFeature maxFeatures,
     int minSamplesSplit,
     int minSamplesLeaf,
     double minSplitGain
@@ -18,24 +18,36 @@ RandomForestClassifier::RandomForestClassifier(
     this->nEstimators = nEstimators;
     this->maxSamplesRatio = maxSamplesRatio;
     this->maxFeatures = maxFeatures;
-    this->maxDepth = maxDepth;
-    this->minSamplesSplit = minSamplesSplit;
-    this->minSamplesLeaf = minSamplesLeaf;
-    this->minSplitGain = minSplitGain;
 
-    unsigned seed = randomState == -1 ? time(nullptr) : randomState;
-    this->randomEngine = std::default_random_engine(seed);
-
-    this->estimators = std::vector<CART*>(nEstimators);
+    this->randomEngine = std::default_random_engine(
+        randomState == -1 ? time(nullptr) : randomState);
     this->oobIndexes = std::vector<int*>(nEstimators);
+
+    // Initialize estimators in advance.
+    this->estimators.reserve(nEstimators);
+    for (int i = 0; i < nEstimators; ++i) {
+        this->estimators.emplace_back(
+            maxDepth,
+            minSamplesSplit,
+            minSamplesLeaf,
+            minSplitGain
+        );
+    }
 }
 
 void RandomForestClassifier::fit(const Matrix &train, int categories) {
-    const int k = train.m - 1;
-    if (this->maxFeatures == "sqrt") this->nFeatures = sqrt(k);
-    else if (this->maxFeatures == "log2") this->nFeatures = log2(k);
-    else this->nFeatures = k;
-
+    const int k = train.m - 1;  // except labels
+    switch (this->maxFeatures) {
+        case MaxFeature::SQRT:
+            this->nFeatures = sqrt(k);
+            break;
+        case MaxFeature::LOG2:
+            this->nFeatures = log2(k);
+            break;
+        case MaxFeature::ALL:
+            this->nFeatures = k;
+            break;
+    }
     this->nSamples = int(train.n * this->maxSamplesRatio);
     this->nCategories = categories;
 
@@ -48,15 +60,8 @@ void RandomForestClassifier::fit(const Matrix &train, int categories) {
         this->bootstrap(train, subTrain, featuresIdx, i);
 
         // Feed training data to train CART.
-        CART *estimator = new CART(
-            this->maxDepth,
-            this->minSamplesSplit,
-            this->minSamplesLeaf,
-            this->minSplitGain
-        );
-        estimator->fit(subTrain, featuresIdx, categories);
-
-        this->estimators[i++] = estimator;
+        this->estimators[i].fit(subTrain, featuresIdx, categories);
+        ++i;
     }
 }
 
@@ -66,7 +71,7 @@ Vector RandomForestClassifier::predict(const Matrix &test) {
     // Collect all predictions.
     Matrix labels(this->nEstimators, N, 0.0);
     for (int i = 0; i < this->nEstimators; ++i) {
-        labels[i] = this->estimators[i]->predict(test);
+        labels[i] = this->estimators[i].predict(test);
     }
 
     // Aggregate predictions with majority votes.

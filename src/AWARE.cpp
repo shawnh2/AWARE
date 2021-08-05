@@ -10,7 +10,7 @@ AWARE::AWARE(
     int maxDepth,
     int randomState,
     float maxSamplesRatio,
-    const std::string &maxFeatures,
+    MaxFeature maxFeatures,
     int minSamplesSplit,
     int minSamplesLeaf,
     double minSplitGain
@@ -27,7 +27,7 @@ Vector AWARE::predict(const Matrix &test, const Matrix &train) {
     // Collect all predictions.
     Matrix labels(this->nEstimators, N, 0.0);
     for (int i = 0; i < this->nEstimators; ++i) {
-        labels[i] = this->estimators[i]->predict(test);
+        labels[i] = this->estimators[i].predict(test);
     }
 
     // Aggregate predictions with weights.
@@ -52,7 +52,7 @@ void AWARE::getWeights(const Matrix &train) {
     Vector label = train.col(-1), count(0.0, K);
     Matrix wrong(K, N, 0.0);
     for (int i = 0; i < K; ++i) {
-        Vector pred = this->estimators[i]->predict(train);
+        Vector pred = this->estimators[i].predict(train);
         wrong[i][pred != label] = 1.0;
         count[i] = wrong[i].sum();
     }

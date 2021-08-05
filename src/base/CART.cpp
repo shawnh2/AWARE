@@ -31,8 +31,7 @@ double CART::predict(const Vector &vec) {
 Vector CART::predict(const Matrix &test) {
     Vector preds(0.0, test.n);
     for (int i = 0; i < test.n; ++i) {
-        Vector &row = test[i];
-        preds[i] = this->predict(row, this->nodes[1]);
+        preds[i] = this->predict(test[i], this->nodes[1]);
     }
     return preds;
 }
@@ -42,16 +41,9 @@ void CART::buildTree(
     const Indexes &trainIdx,
     const Indexes &featuresIdx,
     int depth,
-    int nodeIdx
+    int iNode
 ) {
     const int H = trainIdx.size();
-    // Init node.
-    Node *node = new Node;
-    node->splitFeature = -1;
-    node->splitValue = 0.0;
-    node->leaf = 0.0;
-    node->leftChild = 0;
-    node->rightChild = 0;
 
     Vector labels(H);
     train.col(-1, trainIdx, labels);
@@ -59,8 +51,8 @@ void CART::buildTree(
 
     // If labels are all the same or samples are less than minimum samples number.
     if (H <= this->minSamplesSplit || H == distLabels.max()) {
-        node->leaf = argmax(distLabels);
-        this->nodes[nodeIdx] = node;
+        int leaf = argmax(distLabels);
+        this->nodes[iNode] = Node(-1, 0.0, leaf, 0, 0);
     }
 
     // Check depth
@@ -83,24 +75,22 @@ void CART::buildTree(
         if (l <= this->minSamplesLeaf ||
             r <= this->minSamplesLeaf ||
             best.splitGain <= this->minSplitGain) {
-            node->leaf = argmax(distLabels);
-            this->nodes[nodeIdx] = node;
+            int leaf = argmax(distLabels);
+            this->nodes[iNode] = Node(-1, 0.0, leaf, 0, 0);
         }
 
-        node->splitFeature = best.splitFeature;
-        node->splitValue = best.splitValue;
         // Grow the left and right child.
-        node->leftChild = nodeIdx * 2;
-        node->rightChild = nodeIdx * 2 + 1;
+        int leftChild = iNode * 2;
+        int rightChild = leftChild + 1;
+        this->buildTree(train, lti, featuresIdx, depth + 1, leftChild);
+        this->buildTree(train, rti, featuresIdx, depth + 1, rightChild);
 
-        this->buildTree(train, lti, featuresIdx, depth + 1, node->leftChild);
-        this->buildTree(train, rti, featuresIdx, depth + 1, node->rightChild);
-        this->nodes[nodeIdx] = node;
+        this->nodes[iNode] = Node(best.splitFeature, best.splitValue, 0.0, leftChild, rightChild);
     }
     // Exceed the maximum depth.
     else {
-        node->leaf = argmax(distLabels);
-        this->nodes[nodeIdx] = node;
+        int leaf = argmax(distLabels);
+        this->nodes[iNode] = Node(-1, 0.0, leaf, 0, 0);
     }
 }
 
@@ -127,19 +117,22 @@ void CART::getBestSplit(
 
         while (j < pos) {
             // Get the distribution of left and right labels.
-            int k = 0;
+            int k = 0, l = 0, r = 0;
             while (k < H) {
                 int at = labels[k];
-                if (*j >= features[k]) ++ldist[at];
-                else ++rdist[at];
+                if (*j >= features[k]) {
+                    ++ldist[at];
+                    ++l;
+                }
+                else {
+                    ++rdist[at];
+                    ++r;
+                }
                 ++k;
             }
-            int l = ldist.sum(), r = rdist.sum();
-
             // Calculate split gain.
-            // splitGain += (double)l / H * (1.0 - pow(ldist / l, 2).sum());
-            // splitGain += (double)r / H * (1.0 - pow(rdist / r, 2).sum());
-            splitGain = 1.0 - (pow(ldist, 2).sum() / l + pow(rdist, 2).sum() / r) / H;
+            // = l / H * (1.0 - sum(pow(ldist / l, 2))) + r / H * (1.0 - sum(pow(rdist / r, 2)));
+            splitGain = 1.0 - (pow(ldist, 2) / l + pow(rdist, 2) / r).sum() / H;
 
             if (splitGain < best.splitGain) {
                 best.splitGain = splitGain;
@@ -156,14 +149,14 @@ void CART::getBestSplit(
     }
 }
 
-double CART::predict(const Vector &vec, Node *node) {
+double CART::predict(const Vector &vec, const Node &node) {
     double y;
 
-    if (!node->leftChild && !node->rightChild) return node->leaf;
+    if (!node.leftChild && !node.rightChild) return node.leaf;
 
-    if (vec[node->splitFeature] <= node->splitValue)
-         y = this->predict(vec, this->nodes[node->leftChild]);
-    else y = this->predict(vec, this->nodes[node->rightChild]);
+    if (vec[node.splitFeature] <= node.splitValue)
+         y = this->predict(vec, this->nodes[node.leftChild]);
+    else y = this->predict(vec, this->nodes[node.rightChild]);
 
     return y;
 }

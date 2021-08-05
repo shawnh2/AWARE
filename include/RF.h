@@ -7,6 +7,8 @@
 
 namespace wrf {
 
+    enum class MaxFeature {SQRT, LOG2, ALL};
+
     class RandomForestClassifier {
     public:
         // The number of base estimators in forest.
@@ -15,29 +17,17 @@ namespace wrf {
         // The number of samples to draw from train-set to train each base estimator.
         float maxSamplesRatio;
 
-        /* The number of features to consider when looking for the best split.
-        Should be "sqrt" or "log2". If not, then it will consider all features. */
-        std::string maxFeatures;
+        // The number of features to consider when looking for the best split.
+        MaxFeature maxFeatures;
 
-        /* The maximum depth of tree. If is -1, then nodes are expanded until all leaves are pure
-        or until all leaves contain less than minSamplesSplit samples. */
-        int maxDepth;
-
-        // The minimum number of samples required to split an interal node.
-        int minSamplesSplit;
-
-        // The minimum number of samples required to be at a leaf node.
-        int minSamplesLeaf;
-
-        // The minimum information gain of one split.
-        double minSplitGain;
+        // maxDepth, minSamplesSplit, minSamplesLeaf, minSplitGain are used for CART construction.
 
         explicit RandomForestClassifier(
             int nEstimators = 100,
             int maxDepth = 10,
             int randomState = -1,
             float maxSamplesRatio = 0.8,
-            const std::string &maxFeatures = "sqrt",
+            MaxFeature maxFeatures = MaxFeature::SQRT,
             int minSamplesSplit = 2,
             int minSamplesLeaf = 1,
             double minSplitGain = 0.0
@@ -49,15 +39,15 @@ namespace wrf {
 
     protected:
         // The number of features and samples while Bagging.
-        int nFeatures = 0, nSamples = 0;
+        int nFeatures{0}, nSamples{0};
 
         // The categories number of current training dataset.
-        int nCategories = 0;
+        int nCategories{0};
 
         std::default_random_engine randomEngine;
 
         // Store all the base estimators.
-        std::vector<CART*> estimators;
+        std::vector<CART> estimators;
 
         // Store the indexes of out-of-bag.
         std::vector<int*> oobIndexes;

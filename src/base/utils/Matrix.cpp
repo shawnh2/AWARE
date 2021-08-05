@@ -30,9 +30,9 @@ Vector Matrix::col(int i) const {
 }
 
 void Matrix::col(int i, const Indexes &idx, Vector &out) const {
-    int k = 0, at = i < 0 ? i + this->m : i, N = idx.size();
-    while (k < N) {
-        out[k] = this->rows[idx[k]][at];
+    int k = 0, at = i < 0 ? i + this->m : i;
+    for(int pos : idx) {
+        out[k] = this->rows[pos][at];
         ++k;
     }
 }

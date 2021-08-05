@@ -22,7 +22,7 @@ namespace wrf {
             int maxDepth = 10,
             int randomState = -1,
             float maxSamplesRatio = 0.8,
-            const std::string &maxFeatures = "sqrt",
+            MaxFeature maxFeatures = MaxFeature::SQRT,
             int minSamplesSplit = 2,
             int minSamplesLeaf = 1,
             double minSplitGain = 0.0
