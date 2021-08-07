@@ -6,6 +6,7 @@
 #include "RF.h"
 #include "TWRF.h"
 #include "WAVE.h"
+#include "BTA.h"
 #include "AWARE.h"
 
 using namespace wrf;
@@ -82,7 +83,7 @@ int main(int argc, char **argv) {
         FIT(RandomForestClassifier, nEstimators, maxDepth, randomState)
         PREDICT(test)
         TIME_END()
-        cout << " RF " << '\t' << ACC << '\t' << TIME << "s\n";
+        cout << " RF \t" << ACC << '\t' << TIME << "s\n";
     }
 
     // TWRF
@@ -91,7 +92,7 @@ int main(int argc, char **argv) {
         FIT(TWRF, nEstimators, maxDepth, randomState)
         PREDICT(test, train)
         TIME_END()
-        cout << "TWRF" << '\t' << ACC << '\t' << TIME << "s\n";
+        cout << "TWRF\t" << ACC << '\t' << TIME << "s\n";
     }
 
     // WAVE
@@ -100,7 +101,16 @@ int main(int argc, char **argv) {
         FIT(WAVE, nEstimators, maxDepth, randomState)
         PREDICT(test, train)
         TIME_END()
-        cout << "WAVE" << '\t' << ACC << '\t' << TIME << "s\n";
+        cout << "WAVE\t" << ACC << '\t' << TIME << "s\n";
+    }
+
+    // BTA
+    {
+        TIME_BEGIN()
+        FIT(BTA, nEstimators, maxDepth, randomState)
+        PREDICT(test, train)
+        TIME_END()
+        cout << "BTA \t" << ACC << '\t' << TIME << "s\n";
     }
 
     // AWARE
@@ -109,7 +119,7 @@ int main(int argc, char **argv) {
         FIT(AWARE, nEstimators, maxDepth, randomState)
         PREDICT(test, train)
         TIME_END()
-        cout << "AWARE" << '\t' << ACC << '\t' << TIME << "s\n";
+        cout << "AWARE\t" << ACC << '\t' << TIME << "s\n";
     }
 
     return 0;

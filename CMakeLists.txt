@@ -10,6 +10,7 @@ set(SOURCES
         src/base/RF.cpp
         src/etc/TWRF.cpp src/etc/TWRF.h
         src/etc/WAVE.cpp src/etc/WAVE.h
+        src/etc/BTA.cpp src/etc/BTA.h
         src/AWARE.cpp)
 set(HEADERS
         include/utils/Matrix.h
