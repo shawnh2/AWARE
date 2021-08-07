@@ -4,10 +4,14 @@
 #include "RF.h"
 
 namespace wrf {
-    /*
+
+    /* Adaptive Weighted voting Aggregation for Ensemble.
+
     Reference:
-    [1] Zhu, Zou, Hastie. Multi-class AdaBoost. Statistics and its Interface, 2006.
-     */
+    [1] Friedman, Hastie, Tibshirani. Additive logistic regression: A statistical view of boosting.
+        Annals of Statistics, 2000.
+    [2] Zhu, Zou, Hastie. Multi-class AdaBoost. Statistics and its Interface, 2006.
+    */
     class AWARE: public RandomForestClassifier {
     public:
         explicit AWARE(
@@ -28,6 +32,7 @@ namespace wrf {
 
         void getWeights(const Matrix &train);
     };
+
 }
 
 #endif //WRF_AWARE_H
