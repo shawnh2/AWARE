@@ -25,15 +25,23 @@ void CART::fit(const Matrix &train, const Indexes &featuresIdx, int categories) 
 }
 
 double CART::predict(const Vector &vec) {
-    return this->predict(vec, this->nodes[1]);
+    return this->_predict(vec, this->nodes[1]);
 }
 
 Vector CART::predict(const Matrix &test) {
     Vector preds(0.0, test.n);
     for (int i = 0; i < test.n; ++i) {
-        preds[i] = this->predict(test[i], this->nodes[1]);
+        preds[i] = this->_predict(test[i], this->nodes[1]);
     }
     return preds;
+}
+
+Matrix CART::predictProb(const Matrix &test) {
+    Matrix probs(test.n, this->nCategories, 0.0);
+    for (int i = 0; i < test.n; ++i) {
+        probs[i] = this->_predictProb(test[i], this->nodes[1]);
+    }
+    return probs;
 }
 
 void CART::buildTree(
@@ -52,7 +60,7 @@ void CART::buildTree(
     // If labels are all the same or samples are less than minimum samples number.
     if (H <= this->minSamplesSplit || H == distLabels.max()) {
         int leaf = argmax(distLabels);
-        this->nodes[iNode] = Node(-1, 0.0, leaf, 0, 0);
+        this->nodes[iNode] = Node(-1, 0.0, leaf, 0, 0, distLabels / H);
     }
 
     // Check depth
@@ -76,7 +84,7 @@ void CART::buildTree(
             r <= this->minSamplesLeaf ||
             best.splitGain <= this->minSplitGain) {
             int leaf = argmax(distLabels);
-            this->nodes[iNode] = Node(-1, 0.0, leaf, 0, 0);
+            this->nodes[iNode] = Node(-1, 0.0, leaf, 0, 0, distLabels / H);
         }
 
         // Grow the left and right child.
@@ -85,12 +93,12 @@ void CART::buildTree(
         this->buildTree(train, lti, featuresIdx, depth + 1, leftChild);
         this->buildTree(train, rti, featuresIdx, depth + 1, rightChild);
 
-        this->nodes[iNode] = Node(best.splitFeature, best.splitValue, 0.0, leftChild, rightChild);
+        this->nodes[iNode] = Node(best.splitFeature, best.splitValue, 0.0, leftChild, rightChild, distLabels / H);
     }
     // Exceed the maximum depth.
     else {
         int leaf = argmax(distLabels);
-        this->nodes[iNode] = Node(-1, 0.0, leaf, 0, 0);
+        this->nodes[iNode] = Node(-1, 0.0, leaf, 0, 0, distLabels / H);
     }
 }
 
@@ -149,14 +157,26 @@ void CART::getBestSplit(
     }
 }
 
-double CART::predict(const Vector &vec, const Node &node) {
+double CART::_predict(const Vector &vec, const Node &node) {
     double y;
 
     if (!node.leftChild && !node.rightChild) return node.leaf;
 
     if (vec[node.splitFeature] <= node.splitValue)
-         y = this->predict(vec, this->nodes[node.leftChild]);
-    else y = this->predict(vec, this->nodes[node.rightChild]);
+         y = this->_predict(vec, this->nodes[node.leftChild]);
+    else y = this->_predict(vec, this->nodes[node.rightChild]);
 
     return y;
+}
+
+Vector CART::_predictProb(const Vector &vec, const Node &node) {
+    Vector res;
+
+    if (!node.leftChild && !node.rightChild) return node.prob;
+
+    if (vec[node.splitFeature] <= node.splitValue)
+         res = this->_predictProb(vec, this->nodes[node.leftChild]);
+    else res = this->_predictProb(vec, this->nodes[node.rightChild]);
+
+    return res;
 }
