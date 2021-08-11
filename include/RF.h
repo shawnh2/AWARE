@@ -3,8 +3,6 @@
 
 #include "CART.h"
 
-#include <random>
-
 namespace wrf {
 
     enum class MaxFeature {SQRT, LOG2, ALL};
@@ -21,11 +19,14 @@ namespace wrf {
         MaxFeature maxFeatures;
 
         // maxDepth, minSamplesSplit, minSamplesLeaf, minSplitGain are used for CART construction.
+        int maxDepth;
+        int minSamplesSplit;
+        int minSamplesLeaf;
+        double minSplitGain;
 
         explicit RandomForestClassifier(
             int nEstimators = 100,
             int maxDepth = 10,
-            int randomState = -1,
             float maxSamplesRatio = 0.8,
             MaxFeature maxFeatures = MaxFeature::SQRT,
             int minSamplesSplit = 2,
@@ -33,7 +34,9 @@ namespace wrf {
             double minSplitGain = 0.0
         );
 
-        void fit(const Matrix &train, int categories);
+        ~RandomForestClassifier();
+
+        void fit(const Matrix &train, int categories, int randomState = -1);
 
         Vector predict(const Matrix &test);
 
@@ -44,10 +47,8 @@ namespace wrf {
         // The categories number of current training dataset.
         int nCategories{0};
 
-        std::default_random_engine randomEngine;
-
         // Store all the base estimators.
-        std::vector<CART> estimators;
+        std::vector<CART*> estimators;
 
         // Store the indexes of out-of-bag.
         std::vector<int*> oobIndexes;
@@ -57,6 +58,7 @@ namespace wrf {
             const Matrix &train,
             Matrix &subTrain,
             Indexes &featuresIdx,
+            unsigned randomState,
             int epoch
         );
     };

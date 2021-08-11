@@ -22,7 +22,6 @@ namespace wrf {
         explicit TWRF(
             int nEstimators = 100,
             int maxDepth = 10,
-            int randomState = -1,
             float maxSamplesRatio = 0.8,
             MaxFeature maxFeatures = MaxFeature::SQRT,
             int minSamplesSplit = 2,

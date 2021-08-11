@@ -6,15 +6,13 @@ using namespace wrf;
 TWRF::TWRF(
     int nEstimators,
     int maxDepth,
-    int randomState,
     float maxSamplesRatio,
     MaxFeature maxFeatures,
     int minSamplesSplit,
     int minSamplesLeaf,
     double minSplitGain
 ): RandomForestClassifier(
-    nEstimators, maxDepth, randomState, maxSamplesRatio,
-    maxFeatures, minSamplesSplit, minSamplesLeaf, minSplitGain
+    nEstimators, maxDepth, maxSamplesRatio, maxFeatures, minSamplesSplit, minSamplesLeaf, minSplitGain
 ) {
     this->estimatorsW = Vector(0.0, this->nEstimators);
 }
@@ -25,7 +23,7 @@ Vector TWRF::predict(const Matrix &test, const Matrix &train) {
     // Collect all predictions.
     Matrix labels(this->nEstimators, N, 0.0);
     for (int i = 0; i < this->nEstimators; ++i) {
-        labels[i] = this->estimators[i].predict(test);
+        labels[i] = this->estimators[i]->predict(test);
     }
 
     // Aggregate predictions with weights.
@@ -51,7 +49,7 @@ void TWRF::getWeights(const Matrix &train) {
 
         // Compute accuracy.
         Vector right(0.0, N), labels = oob.col(-1);
-        Vector preds = this->estimators[i].predict(oob);
+        Vector preds = this->estimators[i]->predict(oob);
         right[preds == labels] = 1.0;
 
         this->estimatorsW[i] = right.sum() / N;

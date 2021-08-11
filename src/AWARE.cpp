@@ -8,15 +8,13 @@ using namespace wrf;
 AWARE::AWARE(
     int nEstimators,
     int maxDepth,
-    int randomState,
     float maxSamplesRatio,
     MaxFeature maxFeatures,
     int minSamplesSplit,
     int minSamplesLeaf,
     double minSplitGain
 ): RandomForestClassifier(
-    nEstimators, maxDepth, randomState, maxSamplesRatio,
-    maxFeatures, minSamplesSplit, minSamplesLeaf, minSplitGain
+    nEstimators, maxDepth, maxSamplesRatio, maxFeatures, minSamplesSplit, minSamplesLeaf, minSplitGain
 ) {
     this->estimatorsW = Vector(0.0, this->nEstimators);
 }
@@ -27,7 +25,7 @@ Vector AWARE::predict(const Matrix &test, const Matrix &train) {
     // Collect all predictions.
     Matrix labels(this->nEstimators, N, 0.0);
     for (int i = 0; i < this->nEstimators; ++i) {
-        labels[i] = this->estimators[i].predict(test);
+        labels[i] = this->estimators[i]->predict(test);
     }
 
     // Aggregate predictions with weights.
@@ -36,9 +34,7 @@ Vector AWARE::predict(const Matrix &test, const Matrix &train) {
     for (int i = 0; i < N; ++i) {
         Vector y = labels.col(i), dist(0.0, this->nCategories);
         for (int j = 0; j < this->nEstimators; ++j) {
-            Vector factor(-1.0 / (this->nCategories - 1), this->nCategories);
-            factor[y[j]] = 1.0;
-            dist += factor * this->estimatorsW[j];
+            dist[y[j]] += this->estimatorsW[j];
         }
         preds[i] = argmax(dist);
     }
@@ -52,7 +48,7 @@ void AWARE::getWeights(const Matrix &train) {
     Vector label = train.col(-1), count(0.0, K);
     Matrix wrong(K, N, 0.0);
     for (int i = 0; i < K; ++i) {
-        Vector pred = this->estimators[i].predict(train);
+        Vector pred = this->estimators[i]->predict(train);
         wrong[i][pred != label] = 1.0;
         count[i] = wrong[i].sum();
     }

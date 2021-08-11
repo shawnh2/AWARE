@@ -18,6 +18,9 @@ namespace wrf {
         Matrix(int n, int m, double a);
         Matrix(int n, double eye);
 
+        // Destructor
+        ~Matrix();
+
         // Get one column of data in matrix.
         Vector col(int i) const;
         // Get one column of data with selected rows in matrix.

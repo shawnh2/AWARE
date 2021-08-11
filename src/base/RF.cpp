@@ -2,13 +2,13 @@
 #include "Metric.h"
 
 #include <numeric>
+#include <random>
 
 using namespace wrf;
 
 RandomForestClassifier::RandomForestClassifier(
     int nEstimators,
     int maxDepth,
-    int randomState,
     float maxSamplesRatio,
     MaxFeature maxFeatures,
     int minSamplesSplit,
@@ -18,24 +18,22 @@ RandomForestClassifier::RandomForestClassifier(
     this->nEstimators = nEstimators;
     this->maxSamplesRatio = maxSamplesRatio;
     this->maxFeatures = maxFeatures;
+    this->maxDepth = maxDepth;
+    this->minSamplesSplit = minSamplesSplit;
+    this->minSamplesLeaf = minSamplesLeaf;
+    this->minSplitGain = minSplitGain;
 
-    this->randomEngine = std::default_random_engine(
-        randomState == -1 ? time(nullptr) : randomState);
     this->oobIndexes = std::vector<int*>(nEstimators);
-
-    // Initialize estimators in advance.
+    // Initialize estimators.
     this->estimators.reserve(nEstimators);
-    for (int i = 0; i < nEstimators; ++i) {
-        this->estimators.emplace_back(
-            maxDepth,
-            minSamplesSplit,
-            minSamplesLeaf,
-            minSplitGain
-        );
-    }
 }
 
-void RandomForestClassifier::fit(const Matrix &train, int categories) {
+RandomForestClassifier::~RandomForestClassifier() {
+    this->estimators.clear();
+    this->oobIndexes.clear();
+}
+
+void RandomForestClassifier::fit(const Matrix &train, int categories, int randomState) {
     const int k = train.m - 1;  // except labels
     switch (this->maxFeatures) {
         case MaxFeature::SQRT:
@@ -52,16 +50,23 @@ void RandomForestClassifier::fit(const Matrix &train, int categories) {
     this->nCategories = categories;
 
     int i = 0;
+    unsigned seed = randomState < 0 ? time(nullptr) : randomState;
     // Fitting each base estimator.
     while (i < this->nEstimators) {
         // Get training data from bootstrap.
         Matrix subTrain(this->nSamples, this->nFeatures + 1, 0.0);
         Indexes featuresIdx(k);
-        this->bootstrap(train, subTrain, featuresIdx, i);
+        this->bootstrap(train, subTrain, featuresIdx, seed, i);
 
         // Feed training data to train CART.
-        this->estimators[i].fit(subTrain, featuresIdx, categories);
-        ++i;
+        CART *cart = new CART(
+            this->maxDepth,
+            this->minSamplesSplit,
+            this->minSamplesLeaf,
+            this->minSplitGain
+        );
+        cart->fit(subTrain, featuresIdx, categories);
+        this->estimators[i++] = cart;
     }
 }
 
@@ -71,7 +76,7 @@ Vector RandomForestClassifier::predict(const Matrix &test) {
     // Collect all predictions.
     Matrix labels(this->nEstimators, N, 0.0);
     for (int i = 0; i < this->nEstimators; ++i) {
-        labels[i] = this->estimators[i].predict(test);
+        labels[i] = this->estimators[i]->predict(test);
     }
 
     // Aggregate predictions with majority votes.
@@ -88,17 +93,19 @@ void RandomForestClassifier::bootstrap(
     const Matrix &train,
     Matrix &subTrain,
     Indexes &featuresIdx,
+    unsigned randomState,
     int epoch
 ) {
     int i;
     const int H = train.n;
+    auto randomEngine = std::default_random_engine(randomState);
 
     // Draw samples from train set with replacement.
     int samplesIdx[this->nSamples];
     std::valarray<int> unsampled(1, H);
     std::uniform_int_distribution<int> rdis(0, H - 1);
     for (i = 0; i < this->nSamples; ++i) {
-        int pos = rdis(this->randomEngine);
+        int pos = rdis(randomEngine);
         samplesIdx[i] = pos;
         unsampled[pos] = 0;
     }
@@ -112,7 +119,7 @@ void RandomForestClassifier::bootstrap(
 
     // Draw features from train set without replacement.
     std::iota(featuresIdx.begin(), featuresIdx.end(), 0);
-    std::shuffle(featuresIdx.begin(), featuresIdx.end(), this->randomEngine);
+    std::shuffle(featuresIdx.begin(), featuresIdx.end(), randomEngine);
     featuresIdx.resize(this->nFeatures);
 
     // Generating a sub set.

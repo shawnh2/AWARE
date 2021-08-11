@@ -14,11 +14,6 @@ namespace wrf {
         int leftChild, rightChild;
         // Class probability distribution
         Vector prob;
-
-        // Constructor
-        Node(int f, double v, double leaf, int li, int ri, Vector &&pd)
-        : splitFeature(f), splitValue(v), leaf(leaf), leftChild(li), rightChild(ri), prob(pd)
-        {}
     } Node;
 
     // Store the information about one best split feature.
@@ -51,18 +46,20 @@ namespace wrf {
             double minSplitGain
         );
 
+        ~CART();
+
         void fit(const Matrix &train, const Indexes &featuresIdx, int categories);
 
         // Predict label form a single vector.
         double predict(const Vector &vec);
         // Predict labels from a test set.
         Vector predict(const Matrix &test);
-        // Predcit probabilities from a test set.
+        // Predict probabilities from a test set.
         Matrix predictProb(const Matrix &test);
 
     private:
         // Store the node in a sequence.
-        std::vector<Node> nodes;
+        std::vector<Node*> nodes;
 
         // The categories number of current training dataset.
         int nCategories{0};
@@ -85,10 +82,10 @@ namespace wrf {
         ) const;
 
         // Predict label form a single vector recursively.
-        double _predict(const Vector &vec, const Node &node);
+        double _predict(const Vector &vec, const Node *node);
 
         // Predict probabilities from a single vector recursively.
-        Vector _predictProb(const Vector &vec, const Node &node);
+        Vector _predictProb(const Vector &vec, const Node *node);
     };
 
 }

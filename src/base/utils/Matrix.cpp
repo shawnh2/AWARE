@@ -19,6 +19,10 @@ Matrix::Matrix(int n, double eye) {
     }
 }
 
+Matrix::~Matrix() {
+    delete []this->rows;
+}
+
 Vector Matrix::col(int i) const {
     Vector out(this->n);
     int k = 0, at = i < 0 ? i + this->m : i;

@@ -6,15 +6,13 @@ using namespace wrf;
 BTA::BTA(
     int nEstimators,
     int maxDepth,
-    int randomState,
     float maxSamplesRatio,
     MaxFeature maxFeatures,
     int minSamplesSplit,
     int minSamplesLeaf,
     double minSplitGain
 ): RandomForestClassifier(
-    nEstimators, maxDepth, randomState, maxSamplesRatio,
-    maxFeatures, minSamplesSplit, minSamplesLeaf, minSplitGain
+    nEstimators, maxDepth, maxSamplesRatio, maxFeatures, minSamplesSplit, minSamplesLeaf, minSplitGain
 ) {}
 
 Vector BTA::predict(const Matrix &test, const Matrix &train) {
@@ -33,7 +31,7 @@ Vector BTA::predict(const Matrix &test, const Matrix &train) {
         CMs.emplace_back(C, 0.0);
         Matrix &cm = CMs[i];  // i: true, j: pred
         Vector Y = oob.col(-1);
-        Vector L = this->estimators[i].predict(oob);
+        Vector L = this->estimators[i]->predict(oob);
         for (int j = 0; j < n; ++j) cm[Y[j]][L[j]] += 1.0;
     }
 
@@ -49,7 +47,7 @@ Vector BTA::predict(const Matrix &test, const Matrix &train) {
             double CP = 0.0;
             for (int k = 0; k < this->nEstimators; ++k) {
                 const Matrix &cm = CMs[k];
-                double y = this->estimators[k].predict(test[i]);
+                double y = this->estimators[k]->predict(test[i]);
                 double Ny = cm[c].sum();
                 // Conditional probabilities smoothing.
                 double p = sqrt((cm[c][y] + 1.0 / C) / (Ny + 1.0));
