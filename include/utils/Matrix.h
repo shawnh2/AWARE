@@ -17,6 +17,7 @@ namespace wrf {
         // Constructor
         Matrix(int n, int m, double a);
         Matrix(int n, double eye);
+        Matrix(int n, int m);
 
         // Destructor
         ~Matrix();

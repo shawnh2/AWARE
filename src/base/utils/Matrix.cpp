@@ -19,6 +19,12 @@ Matrix::Matrix(int n, double eye) {
     }
 }
 
+Matrix::Matrix(int n, int m) {
+    this->n = n;
+    this->m = m;
+    this->rows = new Vector[n];
+}
+
 Matrix::~Matrix() {
     delete []this->rows;
 }

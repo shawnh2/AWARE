@@ -21,7 +21,7 @@ Vector TWRF::predict(const Matrix &test, const Matrix &train) {
     const int N = test.n;
 
     // Collect all predictions.
-    Matrix labels(this->nEstimators, N, 0.0);
+    Matrix labels(this->nEstimators, N);
     for (int i = 0; i < this->nEstimators; ++i) {
         labels[i] = this->estimators[i]->predict(test);
     }
@@ -44,7 +44,7 @@ void TWRF::getWeights(const Matrix &train) {
         // Initialize OOB data.
         int *oobIdx = this->oobIndexes[i];
         const int N = oobIdx[0];
-        Matrix oob(N, train.m, 0.0);
+        Matrix oob(N, train.m);
         for (int j = 1; j < N + 1; ++j) oob[j - 1] = train[oobIdx[j]];
 
         // Compute accuracy.

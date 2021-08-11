@@ -74,7 +74,7 @@ Vector RandomForestClassifier::predict(const Matrix &test) {
     const int N = test.n;
 
     // Collect all predictions.
-    Matrix labels(this->nEstimators, N, 0.0);
+    Matrix labels(this->nEstimators, N);
     for (int i = 0; i < this->nEstimators; ++i) {
         labels[i] = this->estimators[i]->predict(test);
     }

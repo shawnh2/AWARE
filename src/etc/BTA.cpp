@@ -24,7 +24,7 @@ Vector BTA::predict(const Matrix &test, const Matrix &train) {
         // Initialize OOB data.
         int *oobIdx = this->oobIndexes[i];
         const int n = oobIdx[0];
-        Matrix oob(n, train.m, 0.0);
+        Matrix oob(n, train.m);
         for (int j = 1; j < n + 1; ++j) oob[j - 1] = train[oobIdx[j]];
 
         // Initialize confusion matrix.

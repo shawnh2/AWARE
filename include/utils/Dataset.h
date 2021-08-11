@@ -38,8 +38,11 @@ namespace wrf {
         DatasetInfo {9, 1484, 10, "yeast"}
     };
 
-    // Load dataset and split it into train and test set.
-    void loadDataset(const DatasetInfo &dataset, Matrix &trainSet, Matrix &testSet, unsigned randomState = 0);
+    // Load dataset from disk.
+    void loadDataset(const DatasetInfo &dataset, Matrix &out);
+
+    // Split dataset into train and test set.
+    void trainTestSplit(const Matrix &src, Matrix &train, Matrix &test, unsigned randomState = 0);
 }
 
 #endif //WRF_DATASET_H
