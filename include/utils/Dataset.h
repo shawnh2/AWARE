@@ -18,12 +18,12 @@ namespace wrf {
 
     // + Add more dataset here.
     static std::array<DatasetInfo, 18> DatasetList = {
-        DatasetInfo {9, 4177, 28, "abalone"},
         DatasetInfo {31, 569, 2, "breast"},
+        DatasetInfo {7, 1728, 4, "car"},
         DatasetInfo {25, 1000, 2, "credit"},
         DatasetInfo {8, 336, 8, "ecoli"},
         DatasetInfo {11, 214, 7, "glass"},
-        DatasetInfo  {13, 615, 4, "hcv"},
+        DatasetInfo {13, 615, 4, "hcv"},
         DatasetInfo {20, 2310, 7, "image"},
         DatasetInfo {8, 90, 2, "immuno"},
         DatasetInfo {17, 20000, 26, "letter"},
