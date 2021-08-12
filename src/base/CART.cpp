@@ -127,38 +127,53 @@ void CART::getBestSplit(
     const Vector &labels,
     bestSplit &best
 ) const {
-    const int H = trainIdx.size(), FN = featuresIdx.size();
-    int i = 0;
+    const int H = trainIdx.size(), FN = featuresIdx.size(), C = this->nCategories;
+    int i = 0, nDist = 2 * C;
     double splitGain;
-    Vector features(H), ufeatures(H);
-    Vector ldist(0.0, this->nCategories), rdist(0.0, this->nCategories);
+    Vector features(H), uFeatures(H);
 
     while (i < FN) {
         train.col(i, trainIdx, features);
-        train.col(i, trainIdx, ufeatures);
+        train.col(i, trainIdx, uFeatures);
         // Get unique features.
-        std::sort(std::begin(ufeatures), std::end(ufeatures));
-        double *pos = std::unique(std::begin(ufeatures), end(ufeatures));
-        double *j = std::begin(ufeatures);
+        std::sort(std::begin(uFeatures), std::end(uFeatures));
+        double *pos = std::unique(std::begin(uFeatures), end(uFeatures));
+        double *j = std::begin(uFeatures);
 
         while (j < pos) {
             // Get the distribution of left and right labels.
+            double dist[nDist];
             int k = 0, l = 0, r = 0;
+            while (k < nDist) {
+                dist[k] = 0.0;
+                ++k;
+            }
+            k = 0;
+            // Range left: [0, C-1], right: [C, 2C-1]
             while (k < H) {
-                int at = labels[k];
+                int y = labels[k];
                 if (*j >= features[k]) {
-                    ++ldist[at];
+                    dist[y] += 1.0;
                     ++l;
-                }
-                else {
-                    ++rdist[at];
+                } else {
+                    dist[y + C] += 1.0;
                     ++r;
                 }
                 ++k;
             }
+
             // Calculate split gain.
-            // = l / H * (1.0 - sum(pow(ldist / l, 2))) + r / H * (1.0 - sum(pow(rdist / r, 2)));
-            splitGain = 1.0 - (pow(ldist, 2) / l + pow(rdist, 2) / r).sum() / H;
+            k = 0;
+            double lGini = 0.0, rGini = 0.0;
+            while (k < C) {
+                lGini += pow(dist[k], 2);
+                ++k;
+            }
+            while (k < nDist) {
+                rGini += pow(dist[k], 2);
+                ++k;
+            }
+            splitGain = 1.0 - (lGini / l + rGini / r) / H;
 
             if (splitGain < best.splitGain) {
                 best.splitGain = splitGain;
@@ -167,11 +182,10 @@ void CART::getBestSplit(
                 best.curFeature = i;
             }
             ++j;
-            ldist = 0.0;
-            rdist = 0.0;
         }
         ++i;
         features = 0.0;
+        uFeatures = 0.0;
     }
 }
 
