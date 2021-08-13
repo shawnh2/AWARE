@@ -17,7 +17,7 @@ namespace wrf {
     } DatasetInfo;
 
     // + Add more dataset here.
-    static std::array<DatasetInfo, 18> DatasetList = {
+    static std::array<DatasetInfo, 15> DatasetList = {
         DatasetInfo {31, 569, 2, "breast"},
         DatasetInfo {7, 1728, 4, "car"},
         DatasetInfo {25, 1000, 2, "credit"},
@@ -26,23 +26,23 @@ namespace wrf {
         DatasetInfo {13, 615, 4, "hcv"},
         DatasetInfo {20, 2310, 7, "image"},
         DatasetInfo {8, 90, 2, "immuno"},
-        DatasetInfo {17, 20000, 26, "letter"},
         DatasetInfo {7, 345, 2, "liver"},
-        DatasetInfo {9, 12960, 5, "nursery"},
         DatasetInfo {23, 195, 2, "parkinsons"},
         DatasetInfo {10, 58000, 7, "shuttle"},
         DatasetInfo {61, 208, 2, "sonar"},
         DatasetInfo {5, 748, 2, "transfusion"},
         DatasetInfo {22, 5000, 3, "waveform"},
-        DatasetInfo {6, 4839, 2, "wilt"},
-        DatasetInfo {9, 1484, 10, "yeast"}
+        DatasetInfo {6, 4839, 2, "wilt"}
     };
 
-    // Load dataset from disk.
-    void loadDataset(const DatasetInfo &dataset, Matrix &out);
+    // Load dataset from disk and shuffle it if random state >= 0.
+    void loadDataset(const DatasetInfo &dataset, Matrix &out, int randomState = -1);
 
-    // Split dataset into train and test set.
+    // Split dataset into train and test set randomly.
     void trainTestSplit(const Matrix &src, Matrix &train, Matrix &test, unsigned randomState = 0);
+
+    // Split dataset into train and test set by the begin and end index of test set.
+    void trainTestSplit(const Matrix &src, const int *ridx, Matrix &train, Matrix &test, int testA, int testZ);
 }
 
 #endif //WRF_DATASET_H

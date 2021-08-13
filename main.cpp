@@ -1,5 +1,6 @@
 #include <iostream>
-#include <chrono>
+#include <numeric>
+#include <random>
 #include <unistd.h>
 
 #include "Dataset.h"
@@ -11,116 +12,67 @@
 
 using namespace wrf;
 using namespace std;
-using namespace chrono;
 
-#define FIT(RF, ...) \
-    auto *__rf = new RF(__VA_ARGS__); \
-    __rf->fit(train, ds.categories);
+#define N_ESTIMATORS 100
+#define MAX_DEPTH 8
+#define EPOCH 100
 
-#define PREDICT(...) \
-    Vector __pred = __rf->predict(__VA_ARGS__); \
-    Vector __acc(0.0, M); \
-    __acc[__pred == labels] = 1.0;
-
-#define TIME_BEGIN() auto __Ta = system_clock::now();
-
-#define TIME_END() auto __Tz = system_clock::now(); \
-    auto __Td = duration_cast<microseconds>(__Tz - __Ta);
-
-#define ACC __acc.sum() / M
-#define TIME __Td.count() / 10e6
-
-/*
- Available args:
- -D dataset_index * (not optional)
- -n n_estimators
- -d max_depth
- -r random_state
- */
+// -d: The index of dataset.
 
 int main(int argc, char **argv) {
-    int datasetIdx;
-    int nEstimators = 100;
-    int maxDepth = 5;
-    unsigned randomState = 0;
+    int DI, RS = 99, ch;
 
-    int ch;
-    while ((ch = getopt(argc, argv, "D:n::d::r::")) != -1) {
-        switch (ch) {
-            case 'D':
-                datasetIdx = atoi(optarg);
-                assert(datasetIdx >= 0 && datasetIdx < 18);
-                break;
-            case 'n':
-                nEstimators = atoi(optarg);
-                break;
-            case 'd':
-                maxDepth = atoi(optarg);
-                break;
-            case 'r':
-                randomState = atoi(optarg);
-            default:
-                break;
+    while ((ch = getopt(argc, argv, "d:")) != -1) {
+        if (ch == 'd') {
+            DI = atoi(optarg);
+            assert(DI >= 0 && DI < DatasetList.size());
         }
     }
 
-    DatasetInfo ds = DatasetList[datasetIdx];
-    int N = int(ds.height * 0.75);
-    int M = ds.height - N;
-    Matrix train(N, ds.width, 0.0);
-    Matrix test(M, ds.width, 0.0);
-    loadDataset(ds, train, test);
+    // Load dataset.
+    DatasetInfo ds = DatasetList[DI];
+    const int H = ds.height, W = ds.width, C = ds.categories;
+    Matrix set(H, W, 0.0);
+    loadDataset(ds, set, RS);
 
-    Vector labels = test.col(-1);
+    // Assign fitting algorithm
+    AWARE algor(N_ESTIMATORS, MAX_DEPTH);
+    cout << "Fitting on dataset: " << ds.name << endl;
 
-    cout << "Fitting on dataset: " << ds.name << " [";
-    cout << "n_estimators=" << nEstimators;
-    cout << ", max_depth=" << maxDepth;
-    cout << ", random_state=" << randomState << "]\n";
-    // RF
-    {
-        TIME_BEGIN()
-        FIT(RandomForestClassifier, nEstimators, maxDepth, randomState)
-        PREDICT(test)
-        TIME_END()
-        cout << " RF \t" << ACC << '\t' << TIME << "s\n";
+    // Perform 10-fold cross validation.
+    Indexes fold(10, H / 10);
+    fold[0] += H % 10;
+
+    Vector ACC(0.0, EPOCH);
+    for (int i = 0; i < EPOCH; ++i, ++RS) {
+        // Shuffle the loaded dataset.
+        int randomIndexes[H];
+        std::iota(randomIndexes, randomIndexes + H, 0);
+        std::shuffle(randomIndexes, randomIndexes + H, std::default_random_engine(RS));
+
+        int a = 0, z;
+        Vector foldACC(0.0, 10);
+        for (int k = 0, foldRS = 99; k < 10; foldRS *= ++k) {
+            const int testSize = fold[k];
+            z = a + testSize - 1;
+
+            Matrix test(testSize, W), train(H - testSize, W);
+            trainTestSplit(set, randomIndexes, train, test, a, z);
+            // Fitting and predict.
+            algor.fit(train, C, foldRS);
+            Vector Y = test.col(-1), acc(0.0, testSize);
+            Vector y = algor.predict(test, train);
+            acc[y == Y] = 1.0;
+            foldACC[k] = acc.sum() / testSize;
+
+            a = z + 1;
+        }
+        ACC[i] = foldACC.sum() / 10;
+        cout << "epoch=" << i << " \t acc=" << ACC[i] << endl;
     }
 
-    // TWRF
-    {
-        TIME_BEGIN()
-        FIT(TWRF, nEstimators, maxDepth, randomState)
-        PREDICT(test, train)
-        TIME_END()
-        cout << "TWRF\t" << ACC << '\t' << TIME << "s\n";
-    }
-
-    // WAVE
-    {
-        TIME_BEGIN()
-        FIT(WAVE, nEstimators, maxDepth, randomState)
-        PREDICT(test, train)
-        TIME_END()
-        cout << "WAVE\t" << ACC << '\t' << TIME << "s\n";
-    }
-
-    // BTA
-    {
-        TIME_BEGIN()
-        FIT(BTA, nEstimators, maxDepth, randomState)
-        PREDICT(test, train)
-        TIME_END()
-        cout << "BTA \t" << ACC << '\t' << TIME << "s\n";
-    }
-
-    // AWARE
-    {
-        TIME_BEGIN()
-        FIT(AWARE, nEstimators, maxDepth, randomState)
-        PREDICT(test, train)
-        TIME_END()
-        cout << "AWARE\t" << ACC << '\t' << TIME << "s\n";
-    }
+    // Mean accuracy
+    cout << "\nFinal Mean Accuracy on " << ds.name << ": " << ACC.sum() / EPOCH << endl;
 
     return 0;
 }
