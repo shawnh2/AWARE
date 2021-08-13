@@ -39,7 +39,7 @@ Vector Matrix::col(int i) const {
     return out;
 }
 
-void Matrix::col(int i, const Indexes &idx, Vector &out) const {
+void Matrix::col(int i, const Indexes &idx, double *out) const {
     int k = 0, at = i < 0 ? i + this->m : i;
     for(int pos : idx) {
         out[k] = this->rows[pos][at];

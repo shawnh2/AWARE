@@ -7,6 +7,7 @@ namespace wrf {
 
     // Get the distribution of labels.
     Vector distribution(const Vector &labels, int k);
+    Vector distribution(const double *labels, int n, int k);
 
     // Get the index of first max value in vector.
     int argmax(const Vector &dist);

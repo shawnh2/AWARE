@@ -25,7 +25,7 @@ namespace wrf {
         // Get one column of data in matrix.
         Vector col(int i) const;
         // Get one column of data with selected rows in matrix.
-        void col(int i, const Indexes &idx, Vector &out) const;
+        void col(int i, const Indexes &idx, double *out) const;
 
         // Transpose
         Matrix T() const;

@@ -10,6 +10,14 @@ Vector wrf::distribution(const Vector &labels, int k) {
     return res;
 }
 
+Vector wrf::distribution(const double *labels, int n, int k) {
+    Vector res(0.0, k);
+    for (int i = 0; i < n; ++i) {
+        res[labels[i]] += 1.0;
+    }
+    return res;
+}
+
 int wrf::argmax(const Vector &dist) {
     double val = dist.max();
     int i = 0, n = dist.size();

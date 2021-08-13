@@ -77,7 +77,7 @@ namespace wrf {
             const Matrix &train,
             const Indexes &trainIdx,
             const Indexes &featuresIdx,
-            const Vector &labels,
+            const double *labels,
             bestSplit &best
         ) const;
 

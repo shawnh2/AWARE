@@ -57,9 +57,9 @@ void CART::buildTree(
 ) {
     const int H = trainIdx.size();
 
-    Vector labels(H);
+    double labels[H];
     train.col(-1, trainIdx, labels);
-    Vector distLabels = distribution(labels, this->nCategories);
+    Vector distLabels = distribution(labels, H, this->nCategories);
 
     // Initialize node.
     Node *node = new Node;
@@ -124,26 +124,26 @@ void CART::getBestSplit(
     const Matrix &train,
     const Indexes &trainIdx,
     const Indexes &featuresIdx,
-    const Vector &labels,
+    const double *labels,
     bestSplit &best
 ) const {
     const int H = trainIdx.size(), FN = featuresIdx.size(), C = this->nCategories;
     int i = 0, nDist = 2 * C;
     double splitGain;
-    Vector features(H), uFeatures(H);
 
     while (i < FN) {
+        double features[H], uFeatures[H];
         train.col(i, trainIdx, features);
         train.col(i, trainIdx, uFeatures);
         // Get unique features.
-        std::sort(std::begin(uFeatures), std::end(uFeatures));
-        double *pos = std::unique(std::begin(uFeatures), end(uFeatures));
-        double *j = std::begin(uFeatures);
+        std::sort(uFeatures, uFeatures + H);
+        double *pos = std::unique(uFeatures, uFeatures + H);
+        double *j = uFeatures;
 
         while (j < pos) {
             // Get the distribution of left and right labels.
             double dist[nDist];
-            int k = 0, l = 0, r = 0;
+            int k = 0;
             while (k < nDist) {
                 dist[k] = 0.0;
                 ++k;
@@ -151,26 +151,24 @@ void CART::getBestSplit(
             k = 0;
             // Range left: [0, C-1], right: [C, 2C-1]
             while (k < H) {
-                int y = labels[k];
-                if (*j >= features[k]) {
-                    dist[y] += 1.0;
-                    ++l;
-                } else {
-                    dist[y + C] += 1.0;
-                    ++r;
-                }
+                int y = *j < features[k] ? (int)labels[k] + C : (int)labels[k];
+                dist[y] += 1.0;
                 ++k;
             }
 
             // Calculate split gain.
             k = 0;
-            double lGini = 0.0, rGini = 0.0;
+            double l = 0.0, lGini = 0.0, r = 0.0, rGini = 0.0;
             while (k < C) {
-                lGini += pow(dist[k], 2);
+                double ld = dist[k];
+                l += ld;
+                lGini += ld * ld;
                 ++k;
             }
             while (k < nDist) {
-                rGini += pow(dist[k], 2);
+                double rd = dist[k];
+                r += rd;
+                rGini += rd * rd;
                 ++k;
             }
             splitGain = 1.0 - (lGini / l + rGini / r) / H;
@@ -184,8 +182,6 @@ void CART::getBestSplit(
             ++j;
         }
         ++i;
-        features = 0.0;
-        uFeatures = 0.0;
     }
 }
 
