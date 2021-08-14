@@ -2,7 +2,6 @@
 #include "Metric.h"
 
 #include <numeric>
-#include <random>
 
 using namespace wrf;
 
@@ -50,13 +49,13 @@ void RandomForestClassifier::fit(const Matrix &train, int categories, int random
     this->nCategories = categories;
 
     int i = 0;
-    unsigned seed = randomState < 0 ? time(nullptr) : randomState;
+    this->randomEngine = std::default_random_engine(randomState < 0 ? time(nullptr) : randomState);
     // Fitting each base estimator.
     while (i < this->nEstimators) {
         // Get training data from bootstrap.
         Matrix subTrain(this->nSamples, this->nFeatures + 1, 0.0);
         Indexes featuresIdx(k);
-        this->bootstrap(train, subTrain, featuresIdx, seed, i);
+        this->bootstrap(train, subTrain, featuresIdx, i);
 
         // Feed training data to train CART.
         CART *cart = new CART(
@@ -93,19 +92,17 @@ void RandomForestClassifier::bootstrap(
     const Matrix &train,
     Matrix &subTrain,
     Indexes &featuresIdx,
-    unsigned randomState,
     int epoch
 ) {
     int i;
     const int H = train.n;
-    auto randomEngine = std::default_random_engine(randomState);
 
     // Draw samples from train set with replacement.
     int samplesIdx[this->nSamples];
     std::valarray<int> unsampled(1, H);
     std::uniform_int_distribution<int> rdis(0, H - 1);
     for (i = 0; i < this->nSamples; ++i) {
-        int pos = rdis(randomEngine);
+        int pos = rdis(this->randomEngine);
         samplesIdx[i] = pos;
         unsampled[pos] = 0;
     }
@@ -119,7 +116,7 @@ void RandomForestClassifier::bootstrap(
 
     // Draw features from train set without replacement.
     std::iota(featuresIdx.begin(), featuresIdx.end(), 0);
-    std::shuffle(featuresIdx.begin(), featuresIdx.end(), randomEngine);
+    std::shuffle(featuresIdx.begin(), featuresIdx.end(), this->randomEngine);
     featuresIdx.resize(this->nFeatures);
 
     // Generating a sub set.

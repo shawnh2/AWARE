@@ -3,6 +3,8 @@
 
 #include "CART.h"
 
+#include <random>
+
 namespace wrf {
 
     enum class MaxFeature {SQRT, LOG2, ALL};
@@ -53,12 +55,14 @@ namespace wrf {
         // Store the indexes of out-of-bag.
         std::vector<int*> oobIndexes;
 
+        // Random engine for bootstrap.
+        std::default_random_engine randomEngine;
+
         // Sample some data from train set to sub set.
         void bootstrap(
             const Matrix &train,
             Matrix &subTrain,
             Indexes &featuresIdx,
-            unsigned randomState,
             int epoch
         );
     };
