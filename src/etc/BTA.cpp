@@ -50,8 +50,8 @@ Vector BTA::predict(const Matrix &test, const Matrix &train) {
                 double y = this->estimators[k]->predict(test[i]);
                 double Ny = cm[c].sum();
                 // Conditional probabilities smoothing.
-                double p = sqrt((cm[c][y] + 1.0 / C) / (Ny + 1.0));
-                CP += log(p);
+                double p = (cm[c][y] + 1.0 / C) / (Ny + 1.0);
+                CP += log(p) * 0.5;
             }
             probs[c] = P_y[c] + CP;
         }

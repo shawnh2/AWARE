@@ -58,7 +58,7 @@ void WAVE::getWeights(const Matrix &train) {
     Q /= Q.sum();
 
     // Stop the iteration when the weight vectors become stable.
-    int epoch = std::max(this->nFeatures, 3);
+    int epoch = std::max(this->nFeatures, (int)sqrt(K));
     for (int m = 0; m < epoch; ++m) {
         // Calculate a classifier weight vector.
         P = X_t * Q;
