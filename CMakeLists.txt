@@ -3,26 +3,24 @@ project(WRF)
 
 set(CMAKE_CXX_STANDARD 11)
 set(SOURCES
-        src/base/utils/Matrix.cpp
-        src/base/utils/Dataset.cpp
-        src/base/utils/Metric.cpp
-        src/base/CART.cpp
-        src/base/RF.cpp
+        src/utils/Matrix.cpp src/utils/Matrix.h
+        src/utils/Dataset.cpp src/utils/Dataset.h
+        src/utils/Metric.cpp src/utils/Metric.h
+
+        src/base/CART.cpp src/base/CART.h
+        src/base/RF.cpp src/base/RF.h
+
         src/etc/TWRF.cpp src/etc/TWRF.h
         src/etc/WAVE.cpp src/etc/WAVE.h
         src/etc/BTA.cpp src/etc/BTA.h
-        src/AWARE.cpp)
-set(HEADERS
-        include/utils/Matrix.h
-        include/utils/Dataset.h
-        include/utils/Metric.h
-        include/CART.h
-        include/RF.h
-        include/AWARE.h)
+
+        src/AWARE.cpp src/AWARE.h
+        )
 
 add_executable(WRF main.cpp ${SOURCES} ${HEADERS})
 
 target_include_directories(WRF PUBLIC
-        ${PROJECT_SOURCE_DIR}/include
-        ${PROJECT_SOURCE_DIR}/include/utils
+        ${PROJECT_SOURCE_DIR}/src
+        ${PROJECT_SOURCE_DIR}/src/base
+        ${PROJECT_SOURCE_DIR}/src/utils
         ${PROJECT_SOURCE_DIR}/src/etc)
