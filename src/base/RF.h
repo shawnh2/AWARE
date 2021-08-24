@@ -52,8 +52,8 @@ namespace wrf {
         // Store all the base estimators.
         std::vector<CART*> estimators;
 
-        // Store the indexes of out-of-bag.
-        std::vector<int*> oobIndexes;
+        // Store the indexes of out-of-bag indicated by 1.
+        std::vector<std::valarray<int>> oobIndexes;
 
         // Random engine for bootstrap.
         std::default_random_engine randomEngine;

@@ -22,10 +22,12 @@ Vector BTA::predict(const Matrix &test, const Matrix &train) {
     CMs.reserve(N);
     for (int i = 0; i < N; ++i) {
         // Initialize OOB data.
-        int *oobIdx = this->oobIndexes[i];
-        const int n = oobIdx[0];
+        const std::valarray<int> &oobIdx = this->oobIndexes[i];
+        const int n = oobIdx.sum(), size = oobIdx.size();
         Matrix oob(n, train.m);
-        for (int j = 1; j < n + 1; ++j) oob[j - 1] = train[oobIdx[j]];
+        for (int j = 0, x = 0; j < size; ++j) {
+            if (oobIdx[j] == 1) oob[x++] = train[j];
+        }
 
         // Initialize confusion matrix.
         CMs.emplace_back(C, 0.0);

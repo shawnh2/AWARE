@@ -22,18 +22,21 @@ RandomForestClassifier::RandomForestClassifier(
     this->minSamplesLeaf = minSamplesLeaf;
     this->minSplitGain = minSplitGain;
 
-    this->oobIndexes = std::vector<int*>(nEstimators);
+    this->oobIndexes = std::vector<std::valarray<int>>(nEstimators);
     // Initialize estimators.
     this->estimators.reserve(nEstimators);
 }
 
 RandomForestClassifier::~RandomForestClassifier() {
+    for (int i = 0; i < this->nEstimators; ++i) {
+        delete this->estimators[i];
+    }
     this->estimators.clear();
     this->oobIndexes.clear();
 }
 
 void RandomForestClassifier::fit(const Matrix &train, int categories, int randomState) {
-    const int k = train.m - 1;  // except labels
+    const int N = train.n, k = train.m - 1;  // except labels
     switch (this->maxFeatures) {
         case MaxFeature::SQRT:
             this->nFeatures = sqrt(k);
@@ -45,7 +48,7 @@ void RandomForestClassifier::fit(const Matrix &train, int categories, int random
             this->nFeatures = k;
             break;
     }
-    this->nSamples = int(train.n * this->maxSamplesRatio);
+    this->nSamples = int(N * this->maxSamplesRatio);
     this->nCategories = categories;
 
     int i = 0;
@@ -55,6 +58,7 @@ void RandomForestClassifier::fit(const Matrix &train, int categories, int random
         // Get training data from bootstrap.
         Matrix subTrain(this->nSamples, this->nFeatures + 1, 0.0);
         Indexes featuresIdx(k);
+        this->oobIndexes[i] = std::valarray<int>(1, N);
         this->bootstrap(train, subTrain, featuresIdx, i);
 
         // Feed training data to train CART.
@@ -99,20 +103,14 @@ void RandomForestClassifier::bootstrap(
 
     // Draw samples from train set with replacement.
     int samplesIdx[this->nSamples];
-    std::valarray<int> unsampled(1, H);
+    // Collect the out-of-bag samples.
+    std::valarray<int> &oobIdx = this->oobIndexes[epoch];
     std::uniform_int_distribution<int> rdis(0, H - 1);
     for (i = 0; i < this->nSamples; ++i) {
         int pos = rdis(this->randomEngine);
         samplesIdx[i] = pos;
-        unsampled[pos] = 0;
+        oobIdx[pos] = 0;
     }
-
-    // Collect the out-of-bag samples.
-    int oobN = unsampled.sum(), l = 1;
-    int *oob = new int[oobN + 1]; // Extra one for element: length (at [0]).
-    for (i = 0; i < H; ++i) if (unsampled[i]) oob[l++] = i;
-    oob[0] = oobN;
-    this->oobIndexes[epoch] = oob;
 
     // Draw features from train set without replacement.
     std::iota(featuresIdx.begin(), featuresIdx.end(), 0);

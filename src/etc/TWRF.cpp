@@ -42,10 +42,12 @@ Vector TWRF::predict(const Matrix &test, const Matrix &train) {
 void TWRF::getWeights(const Matrix &train) {
     for (int i = 0; i < this->nEstimators; ++i) {
         // Initialize OOB data.
-        int *oobIdx = this->oobIndexes[i];
-        const int N = oobIdx[0];
+        const std::valarray<int> &oobIdx = this->oobIndexes[i];
+        const int N = oobIdx.sum(), Size = oobIdx.size();
         Matrix oob(N, train.m);
-        for (int j = 1; j < N + 1; ++j) oob[j - 1] = train[oobIdx[j]];
+        for (int j = 0, x = 0; j < Size; ++j) {
+            if (oobIdx[j] == 1) oob[x++] = train[j];
+        }
 
         // Compute accuracy.
         Vector right(0.0, N), labels = oob.col(-1);
