@@ -24,7 +24,7 @@ int main(int argc, char **argv) {
 
     while ((ch = getopt(argc, argv, "d:")) != -1) {
         if (ch == 'd') {
-            DI = atoi(optarg);
+            DI = stoi(optarg);
             assert(DI >= 0 && DI < DatasetList.size());
         }
     }

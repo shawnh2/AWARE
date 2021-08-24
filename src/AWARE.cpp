@@ -42,37 +42,46 @@ Vector AWARE::predict(const Matrix &test, const Matrix &train) {
 }
 
 void AWARE::getWeights(const Matrix &train) {
-    const int N = train.n, K = this->nEstimators, C = this->nCategories;
+    const int N = train.n, K = this->nEstimators;
+    const Vector Y = train.col(-1);
 
-    // Initialize the performance matrix.
-    Vector label = train.col(-1), count(0.0, K);
-    Matrix wrong(K, N, 0.0);
+    // Initialize prediction error.
+    Vector predErr(0.0, K);
     for (int i = 0; i < K; ++i) {
-        Vector pred = this->estimators[i]->predict(train);
-        wrong[i][pred != label] = 1.0;
-        count[i] = wrong[i].sum();
+        // Initialize OOB data.
+        const std::valarray<int> &oobIdx = this->oobIndexes[i];
+        const int n = oobIdx.sum(), size = oobIdx.size();
+        Matrix oob(n, train.m);
+        for (int j = 0, x = 0; j < size; ++j) {
+            if (oobIdx[j] == 1) oob[x++] = train[j];
+        }
+        // Evaluate OOB prediction error.
+        Vector y = oob.col(-1), pred = this->estimators[i]->predict(oob), wrong(0.0, n);
+        wrong[y != pred] = 1.0;
+        predErr[i] = wrong.sum() / n;
     }
 
     // Sort (argsort) the estimators by its performance.
     Indexes sorted(K);
     std::iota(sorted.begin(), sorted.end(), 0);
     std::sort(sorted.begin(), sorted.end(), [&](int a, int b) noexcept -> bool {
-        return count[a] < count[b];
+        return predErr[a] < predErr[b];
     });
 
     // Initialize the observation and estimators weights.
     Vector OW(1.0 / N, N), EW(0.0, K);
     for (int si : sorted) {
         // Compute error using weight.
-        double err = (wrong[si] * OW).sum() / OW.sum();
+        Vector pred = this->estimators[si]->predict(train), wrong(0.0, N);
+        wrong[pred != Y] = 1.0;
+        double err = (wrong * OW).sum() / OW.sum();
         // compute alpha.
-        double alpha = log(1 / (err + 1e-5) - 1) + log(C - 1);
-        // Update and re-normalize observation weights.
-        OW *= exp(alpha * wrong[si]);
-        OW /= OW.sum();
+        double alpha = log(1 / (err + 1e-6) - 1) + log(this->nCategories - 1);
         EW[si] = alpha;
+        // Update and re-normalize weights.
+        OW *= exp(alpha * wrong);
+        OW /= OW.sum();
     }
-    // Re-normalize estimator weights.
-    EW /= EW.sum();
-    this->estimatorsW = EW;
+
+    this->estimatorsW = EW / EW.sum();
 }
