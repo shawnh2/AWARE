@@ -13,9 +13,9 @@ set(SOURCES
         src/etc/TWRF.cpp src/etc/TWRF.h
         src/etc/WAVE.cpp src/etc/WAVE.h
         src/etc/BTA.cpp src/etc/BTA.h
+        src/etc/DIRF.cpp src/etc/DIRF.h
 
-        src/AWARE.cpp src/AWARE.h
-        )
+        src/AWARE.cpp src/AWARE.h)
 
 add_executable(WRF main.cpp ${SOURCES} ${HEADERS})
 
